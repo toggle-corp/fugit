@@ -2,35 +2,34 @@
 
 set -euo pipefail
 
-# Colors
-RED="\033[0;31m"
-GREEN="\033[0;32m"
-YELLOW="\033[1;33m"
-RESET="\033[0m"
+FUGIT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${FUGIT_SCRIPT_DIR}/_utils.sh"
+
+check_yq
+check_helm
+
+# Determine directory of this script
+TESTS_FILE="tests.yaml"
+SNAPSHOT_DIR="snapshots"
+
+SCRIPT_DIR="${SCRIPT_DIR?error}"
+cd "$SCRIPT_DIR"
 
 CHECK_DIFF_ONLY=false
-
 # Parse command line flags
 for arg in "$@"; do
     case "$arg" in
         --check-diff-only)
-            echo -e "${YELLOW}Running in diff-only mode (no snapshot updates).${RESET}"
+            log_warning "Running in diff-only mode (no snapshot updates)."
             CHECK_DIFF_ONLY=true
             ;;
         *)
-            echo -e "${RED}Unknown argument: $arg${RESET}"
+            log_error "Unknown argument: $arg"
             echo "Usage: $0 [--check-diff-only]"
             exit 1
             ;;
     esac
 done
-
-# Determine directory of this script
-SCRIPT_DIR="${SCRIPT_DIR?error}"
-cd "$SCRIPT_DIR"
-
-TESTS_FILE="tests.yaml"
-SNAPSHOT_DIR="snapshots"
 
 mkdir -p "$SNAPSHOT_DIR"
 
@@ -40,7 +39,7 @@ TEST_NAMES=$(yq '.tests | keys | .[]' "$TESTS_FILE")
 overall_ok=true
 
 for test_name in $TEST_NAMES; do
-    echo -e "${YELLOW}Processing test: $test_name${RESET}"
+    log_warning "Processing test: $test_name"
 
     VALUES_ARGS=()
     VALUES=$(yq ".tests.\"$test_name\"[]" "$TESTS_FILE")
@@ -57,32 +56,32 @@ for test_name in $TEST_NAMES; do
 
     if $CHECK_DIFF_ONLY; then
         if [[ ! -f "$SNAPSHOT_PATH" ]]; then
-            echo -e "${RED}❌ Snapshot missing: $SNAPSHOT_PATH${RESET}"
+            log_error "❌ Snapshot missing: $SNAPSHOT_PATH"
             overall_ok=false
             continue
         fi
 
         if diff -u "$SNAPSHOT_PATH" "$TMP_OUTPUT" > /dev/null; then
-            echo -e "${GREEN}✔ Snapshot up to date: $SNAPSHOT_PATH${RESET}"
+            log_success "✔ Snapshot up to date: $SNAPSHOT_PATH"
         else
-            echo -e "${RED}❌ Snapshot out of date: $SNAPSHOT_PATH${RESET}"
-            echo -e "${YELLOW}--- Diff: ---${RESET}"
+            log_error "❌ Snapshot out of date: $SNAPSHOT_PATH"
+            log_warning "--- Diff: ---"
             diff -u "$SNAPSHOT_PATH" "$TMP_OUTPUT" || true
             overall_ok=false
         fi
     else
         # Update snapshot
         mv "$TMP_OUTPUT" "$SNAPSHOT_PATH"
-        echo -e "${GREEN}✔ Snapshot updated: $SNAPSHOT_PATH${RESET}"
+        log_success "✔ Snapshot updated: $SNAPSHOT_PATH"
     fi
 done
 
 if $CHECK_DIFF_ONLY; then
     if $overall_ok; then
-        echo -e "${GREEN}✔ All snapshots are up to date.${RESET}"
+        log_success "✔ All snapshots are up to date."
         exit 0
     else
-        echo -e "${RED}❌ Some snapshots are outdated.${RESET}"
+        log_error "❌ Some snapshots are outdated."
         exit 1
     fi
 fi

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Original https://github.com/orhun/git-cliff/blob/main/release.sh
-set -e
+set -eu
+
+FUGIT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${FUGIT_SCRIPT_DIR}/_utils.sh"
 
 REPO_NAME=${REPO_NAME?error}
 DEFAULT_BRANCH=${DEFAULT_BRANCH?error}
@@ -10,44 +13,10 @@ DEFAULT_BRANCH=${DEFAULT_BRANCH?error}
 START_COMMIT=${START_COMMIT:-$(git rev-list --max-parents=0 HEAD)}
 RELEASE_CUSTOM_HOOK="${RELEASE_CUSTOM_HOOK?error}"
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-log_success() {
-    echo -e "${GREEN}$1${NC}"
-}
-
-log_error() {
-    echo -e "${RED}$1${NC}"
-}
-
-log_warning() {
-    echo -e "${YELLOW}$1${NC}"
-}
-
-if ! command -v typos &>/dev/null; then
-  log_error "typos is not installed."
-  log_error "Run 'cargo install typos-cli' to install it, otherwise the typos won't be fixed"
-  exit 1
-fi
-
-if ! command -v git-cliff &>/dev/null; then
-  log_error "git-cliff is not installed."
-  log_error "Follow the instruction from https://git-cliff.org/docs/installation/"
-  exit 1
-fi
-
-if ! command -v semver &>/dev/null; then
-  log_error "semver is required to validate the tag."
-  exit 1
-fi
-
-if ! command -v gh &>/dev/null; then
-  log_error "gh is required to generate GITHUB_TOKEN."
-  exit 1
-fi
+check_typos
+check_git_cliff
+check_semver
+check_gh
 
 echo "Generating GITHUB_TOKEN using gh"
 export GITHUB_TOKEN=$(gh auth token)
