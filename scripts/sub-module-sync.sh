@@ -1,7 +1,7 @@
 #!/bin/bash -x
 
-echo "Processing for repo: `pwd`"
-read -p "Proceed? Y to confirm: " confirm
+echo "Processing for repo: $(pwd)"
+read -rp "Proceed? Y to confirm: " confirm
 
 if [[ "$confirm" != "Y" ]]; then
     echo "Aborted by user."
@@ -9,4 +9,4 @@ if [[ "$confirm" != "Y" ]]; then
 fi
 
 git submodule foreach 'git fetch'
-git submodule foreach 'git checkout $(git config -f $toplevel/.gitmodules submodule.$name.branch || echo main)'
+git submodule foreach "git checkout \$(git config -f \$toplevel/.gitmodules submodule.\$name.branch || echo main)"

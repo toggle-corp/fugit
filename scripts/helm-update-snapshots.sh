@@ -3,6 +3,7 @@
 set -euo pipefail
 
 FUGIT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/_utils.sh
 source "${FUGIT_SCRIPT_DIR}/_utils.sh"
 
 check_yq
@@ -19,15 +20,15 @@ CHECK_DIFF_ONLY=false
 # Parse command line flags
 for arg in "$@"; do
     case "$arg" in
-        --check-diff-only)
-            log_warning "Running in diff-only mode (no snapshot updates)."
-            CHECK_DIFF_ONLY=true
-            ;;
-        *)
-            log_error "Unknown argument: $arg"
-            echo "Usage: $0 [--check-diff-only]"
-            exit 1
-            ;;
+    --check-diff-only)
+        log_warning "Running in diff-only mode (no snapshot updates)."
+        CHECK_DIFF_ONLY=true
+        ;;
+    *)
+        log_error "Unknown argument: $arg"
+        echo "Usage: $0 [--check-diff-only]"
+        exit 1
+        ;;
     esac
 done
 
@@ -44,15 +45,15 @@ for test_name in $TEST_NAMES; do
     VALUES_ARGS=()
     VALUES=$(yq ".tests.\"$test_name\"[]" "$TESTS_FILE")
     for values_file in $VALUES; do
-        VALUES_ARGS+=( --values "$values_file" )
+        VALUES_ARGS+=(--values "$values_file")
     done
-    VALUES_ARGS+=( --values "tests/$test_name" )
+    VALUES_ARGS+=(--values "tests/$test_name")
 
     SNAPSHOT_PATH="${SNAPSHOT_DIR}/${test_name%.yaml}.yaml"
 
     # Render template to temp file
     TMP_OUTPUT=$(mktemp)
-    helm template ./ "${VALUES_ARGS[@]}" > "$TMP_OUTPUT"
+    helm template ./ "${VALUES_ARGS[@]}" >"$TMP_OUTPUT"
 
     if $CHECK_DIFF_ONLY; then
         if [[ ! -f "$SNAPSHOT_PATH" ]]; then
@@ -61,7 +62,7 @@ for test_name in $TEST_NAMES; do
             continue
         fi
 
-        if diff -u "$SNAPSHOT_PATH" "$TMP_OUTPUT" > /dev/null; then
+        if diff -u "$SNAPSHOT_PATH" "$TMP_OUTPUT" >/dev/null; then
             log_success "✔ Snapshot up to date: $SNAPSHOT_PATH"
         else
             log_error "❌ Snapshot out of date: $SNAPSHOT_PATH"

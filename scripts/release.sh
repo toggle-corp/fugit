@@ -3,6 +3,7 @@
 set -eu
 
 FUGIT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/_utils.sh
 source "${FUGIT_SCRIPT_DIR}/_utils.sh"
 
 REPO_NAME=${REPO_NAME?error}
@@ -18,8 +19,9 @@ check_git_cliff
 check_semver
 check_gh
 
-echo "Generating GITHUB_TOKEN using gh"
-export GITHUB_TOKEN=$(gh auth token)
+echo "Generating GITHUB_TOKEN using gh (Used by git-cliff)"
+GITHUB_TOKEN="$(gh auth token)"
+export GITHUB_TOKEN
 
 if [ ! -d .git ]; then
     log_error "Detected '$REPO_NAME' as a git submodule"
@@ -30,7 +32,7 @@ fi
 current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 if [ "$current_branch" != "$DEFAULT_BRANCH" ]; then
     log_warning "You are on branch '${current_branch}', not '${DEFAULT_BRANCH}'."
-    read -p "Proceed anyway? Y to confirm: " confirm
+    read -rp "Proceed anyway? Y to confirm: " confirm
     if [[ "$confirm" != "Y" ]]; then
         log_error "Aborted by user."
         exit 1
@@ -41,7 +43,7 @@ echo "Existing tags:"
 git for-each-ref --sort=-creatordate --format '- %(refname:short)' refs/tags | head -n 10
 echo
 
-read -p "Enter new version tag (e.g. v1.2.3, v1.2.3-dev0): " version_tag
+read -rp "Enter new version tag (e.g. v1.2.3, v1.2.3-dev0): " version_tag
 
 # Trim leading/trailing whitespace
 version_tag=$(echo "$version_tag" | xargs)
@@ -51,11 +53,11 @@ if [ -z "$version_tag" ]; then
     exit 1
 fi
 
-if semver valid "$version_tag" > /dev/null; then
-  log_success "Valid SemVer: $version_tag"
+if semver valid "$version_tag" >/dev/null; then
+    log_success "Valid SemVer: $version_tag"
 else
-  log_error "Invalid SemVer: \"$version_tag\""
-  exit 1
+    log_error "Invalid SemVer: \"$version_tag\""
+    exit 1
 fi
 
 # Define your cleanup or final function
@@ -67,13 +69,11 @@ exit_message() {
 }
 trap exit_message EXIT
 
-
 # Determine directory of this script
 SCRIPT_DIR="${SCRIPT_DIR?error}"
 cd "$SCRIPT_DIR"
 
-
-FUGIT_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+FUGIT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Preparing $version_tag..."
 
@@ -82,7 +82,7 @@ echo "Preparing $version_tag..."
 # ---- [END] CUSTOM HOOK ----
 
 # update the changelog
-git-cliff "$START_COMMIT..HEAD" --config "$FUGIT_SCRIPT_DIR/../configs/cliff.toml" --tag "$version_tag" > CHANGELOG.md
+git-cliff "$START_COMMIT..HEAD" --config "$FUGIT_SCRIPT_DIR/../configs/cliff.toml" --tag "$version_tag" >CHANGELOG.md
 git add CHANGELOG.md
 git commit -m "chore(release): prepare for $version_tag"
 git show

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export SCRIPT_DIR
 
 function release_custom_hook {
     echo ""
@@ -15,4 +16,4 @@ export DEFAULT_BRANCH=main
 export GIT_CLIFF__REMOTE__GITHUB__OWNER=toggle-corp
 export GIT_CLIFF__REMOTE__GITHUB__REPO=fugit
 
-$SCRIPT_DIR/scripts/release.sh
+"$SCRIPT_DIR/scripts/release.sh"
