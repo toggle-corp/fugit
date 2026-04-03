@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.1.2](https://github.com/toggle-corp/fugit/compare/v0.1.1..v0.1.2) - 2026-04-03
+### Changes:
+
+#### 🚀  Features
+
+- *(release)* Add support for VERSION_TAG_PREFIX_MODE - ([13cf9ab](https://github.com/toggle-corp/fugit/commit/13cf9abb5072e46787efcea85c69846beea013c7))
+
+
 ## [v0.1.1](https://github.com/toggle-corp/fugit/compare/v0.1.0..v0.1.1) - 2025-11-27
 ### Changes:
 
