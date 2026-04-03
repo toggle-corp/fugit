@@ -13,12 +13,14 @@ DEFAULT_BRANCH=${DEFAULT_BRANCH?error}
 # TODO: Make sure to also update cliff.toml:footer to includes those archived changelogs as well
 START_COMMIT=${START_COMMIT:-$(git rev-list --max-parents=0 HEAD)}
 RELEASE_CUSTOM_HOOK="${RELEASE_CUSTOM_HOOK?error}"
+VERSION_TAG_PREFIX_MODE="${VERSION_TAG_PREFIX_MODE:-require}"
 
 check_typos
 check_git_cliff
 check_semver
 check_gh
 
+log_warning "Using VERSION_TAG_PREFIX_MODE=${VERSION_TAG_PREFIX_MODE}"
 echo "Generating GITHUB_TOKEN using gh (Used by git-cliff)"
 GITHUB_TOKEN="$(gh auth token)"
 export GITHUB_TOKEN
@@ -43,7 +45,25 @@ echo "Existing tags:"
 git for-each-ref --sort=-creatordate --format '- %(refname:short)' refs/tags | head -n 10
 echo
 
-read -rp "Enter new version tag (e.g. v1.2.3, v1.2.3-dev0): " version_tag
+default_version="$1"
+# Decide prompt message based on VERSION_TAG_PREFIX_MODE
+case "$VERSION_TAG_PREFIX_MODE" in
+require)
+    prompt_msg="Enter new version tag (must start with 'v', e.g. v1.2.3): "
+    ;;
+forbid)
+    prompt_msg="Enter new version tag (must NOT start with 'v', e.g. 1.2.3): "
+    ;;
+ignore)
+    prompt_msg="Enter new version tag (e.g. v1.2.3, v1.2.3-dev0): "
+    ;;
+*)
+    log_error "Invalid VERSION_TAG_PREFIX_MODE: ${VERSION_TAG_PREFIX_MODE}. Should be require|forbid|ignore"
+    exit 1
+    ;;
+esac
+
+read -e -i "$default_version" -rp "$prompt_msg" version_tag
 
 # Trim leading/trailing whitespace
 version_tag=$(echo "$version_tag" | xargs)
@@ -59,6 +79,25 @@ else
     log_error "Invalid SemVer: \"$version_tag\""
     exit 1
 fi
+
+case "${VERSION_TAG_PREFIX_MODE}" in
+require)
+    if [[ "${version_tag}" != v* ]]; then
+        log_error "Error: version_tag must start with 'v' (got: ${version_tag})"
+        exit 1
+    fi
+    ;;
+forbid)
+    if [[ "${version_tag}" == v* ]]; then
+        log_error "Error: version_tag must NOT start with 'v' (got: ${version_tag})"
+        exit 1
+    fi
+    ;;
+ignore | "")
+    # do nothing
+    ;;
+    # NOTE: Invalid option is already checked during version prompt
+esac
 
 # Define your cleanup or final function
 exit_message() {

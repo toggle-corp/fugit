@@ -16,4 +16,4 @@ export DEFAULT_BRANCH=main
 export GIT_CLIFF__REMOTE__GITHUB__OWNER=toggle-corp
 export GIT_CLIFF__REMOTE__GITHUB__REPO=fugit
 
-"$SCRIPT_DIR/scripts/release.sh"
+"$SCRIPT_DIR/scripts/release.sh" "$@"
