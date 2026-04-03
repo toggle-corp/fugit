@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.1.3](https://github.com/toggle-corp/fugit/compare/v0.1.2..v0.1.3) - 2026-04-03
+### Changes:
+
+#### 🚀  Features
+
+- Improve sub-module-sync.sh output - ([967862a](https://github.com/toggle-corp/fugit/commit/967862af726fbcdcc93005c6e7e4b9ccd9b5f1f0))
+
+
 ## [v0.1.2](https://github.com/toggle-corp/fugit/compare/v0.1.1..v0.1.2) - 2026-04-03
 ### Changes:
 
