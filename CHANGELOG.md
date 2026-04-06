@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.1.4](https://github.com/toggle-corp/fugit/compare/v0.1.3..v0.1.4) - 2026-04-06
+### Changes:
+
+### 🍻 Pull Requests (1)
+- (#1) [Set namespace to default](https://github.com/toggle-corp/fugit/pull/1)
+
+### :tada: New Contributors (1)
+
+- [@sandeshit](https://github.com/sandeshit) made their first contribution in [#1](https://github.com/toggle-corp/fugit/pull/1)
+
 ## [v0.1.3](https://github.com/toggle-corp/fugit/compare/v0.1.2..v0.1.3) - 2026-04-03
 ### Changes:
 
