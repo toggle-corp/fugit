@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Set namespace to default
+export HELM_NAMESPACE=${CUSTOM_HELM_NAMESPACE:-default}
+
 FUGIT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/_utils.sh
 source "${FUGIT_SCRIPT_DIR}/_utils.sh"
