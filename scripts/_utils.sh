@@ -3,6 +3,7 @@
 set -euo pipefail
 
 # Colors
+BLUE="\033[0;34m"
 RED="\033[0;31m"
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
@@ -25,6 +26,9 @@ function log_warning() {
     echo -e "${YELLOW}$1${RESET}"
 }
 
+function log_info() {
+    echo -e "${BLUE}$1${RESET}"
+}
 # Command check helper
 function check_typos {
     if ! command -v typos &>/dev/null; then

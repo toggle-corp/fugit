@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -20,20 +20,43 @@ SCRIPT_DIR="${SCRIPT_DIR?error}"
 cd "$SCRIPT_DIR"
 
 CHECK_DIFF_ONLY=false
-# Parse command line flags
-for arg in "$@"; do
-    case "$arg" in
+DIFF_CMD="diff -u"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+
     --check-diff-only)
-        log_warning "Running in diff-only mode (no snapshot updates)."
         CHECK_DIFF_ONLY=true
+        shift
         ;;
+
+    --diff-cmd=*)
+        DIFF_CMD="${1#*=}"
+        shift
+        ;;
+
+    --diff-cmd)
+        shift
+        DIFF_CMD=""
+
+        # collect everything until next flag
+        while [[ $# -gt 0 && ! "$1" =~ ^-- ]]; do
+            if [[ -n "$DIFF_CMD" ]]; then
+                DIFF_CMD+=" "
+            fi
+            DIFF_CMD+="$1"
+            shift
+        done
+        ;;
+
     *)
-        log_error "Unknown argument: $arg"
-        echo "Usage: $0 [--check-diff-only]"
+        echo "Unknown option: $1"
         exit 1
         ;;
     esac
 done
+
+log_warning "Using diff command ($DIFF_CMD)."
 
 mkdir -p "$SNAPSHOT_DIR"
 
@@ -43,7 +66,7 @@ TEST_NAMES=$(yq '.tests | keys | .[]' "$TESTS_FILE")
 overall_ok=true
 
 for test_name in $TEST_NAMES; do
-    log_warning "Processing test: $test_name"
+    log_info "=== Processing test: $test_name ==="
 
     VALUES_ARGS=()
     VALUES=$(yq ".tests.\"$test_name\"[]" "$TESTS_FILE")
@@ -56,6 +79,7 @@ for test_name in $TEST_NAMES; do
 
     # Render template to temp file
     TMP_OUTPUT=$(mktemp)
+    log_warning "-> helm template ./ ${VALUES_ARGS[*]}"
     helm template ./ "${VALUES_ARGS[@]}" >"$TMP_OUTPUT"
 
     if $CHECK_DIFF_ONLY; then
@@ -65,12 +89,12 @@ for test_name in $TEST_NAMES; do
             continue
         fi
 
-        if diff -u "$SNAPSHOT_PATH" "$TMP_OUTPUT" >/dev/null; then
+        if $DIFF_CMD "$SNAPSHOT_PATH" "$TMP_OUTPUT" >/dev/null; then
             log_success "✔ Snapshot up to date: $SNAPSHOT_PATH"
         else
             log_error "❌ Snapshot out of date: $SNAPSHOT_PATH"
             log_warning "--- Diff: ---"
-            diff -u "$SNAPSHOT_PATH" "$TMP_OUTPUT" || true
+            $DIFF_CMD "$SNAPSHOT_PATH" "$TMP_OUTPUT" || true
             overall_ok=false
         fi
     else
