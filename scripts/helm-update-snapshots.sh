@@ -89,7 +89,7 @@ for test_name in $TEST_NAMES; do
             continue
         fi
 
-        if $DIFF_CMD "$SNAPSHOT_PATH" "$TMP_OUTPUT" >/dev/null; then
+        if diff -u "$SNAPSHOT_PATH" "$TMP_OUTPUT" >/dev/null; then
             log_success "✔ Snapshot up to date: $SNAPSHOT_PATH"
         else
             log_error "❌ Snapshot out of date: $SNAPSHOT_PATH"
