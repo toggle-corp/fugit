@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.1.5](https://github.com/toggle-corp/fugit/compare/v0.1.4..v0.1.5) - 2026-04-10
+### Changes:
+
+#### 🚀  Features
+
+- Add support for custom diff command for helm-update-snapshots - ([3f8840f](https://github.com/toggle-corp/fugit/commit/3f8840fa019c39cf3760375ebdab1038c464c1f8))
+
+
 ## [v0.1.4](https://github.com/toggle-corp/fugit/compare/v0.1.3..v0.1.4) - 2026-04-06
 ### Changes:
 
