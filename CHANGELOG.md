@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.1.6](https://github.com/toggle-corp/fugit/compare/v0.1.5..v0.1.6) - 2026-04-10
+### Changes:
+
+#### 🐛 Bug Fixes
+
+- *(helm)* Diff command usages - ([366dce1](https://github.com/toggle-corp/fugit/commit/366dce1037930cae7887394bead65f1af7fcd17c))
+
+
 ## [v0.1.5](https://github.com/toggle-corp/fugit/compare/v0.1.4..v0.1.5) - 2026-04-10
 ### Changes:
 
