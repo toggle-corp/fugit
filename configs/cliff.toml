@@ -10,12 +10,11 @@ header = """
 # A Tera template to be rendered for each release in the changelog.
 # See https://keats.github.io/tera/docs/#introduction
 body = """
-{%- macro remote_url() -%}
-  https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
-{%- endmacro -%}
+{%- macro remote_url() -%}<REPO>{%- endmacro -%}
+{%- macro platform_url() -%}<REPO_PLATFORM_URL>{%- endmacro -%}
 
 {%- macro print_contributor(username) -%}
-  [@{{ username }}](https://github.com/{{ username }})
+  [@{{ username }}]({{ self::platform_url() }}/{{ username }})
 {%- endmacro -%}
 
 {% macro print_commit(commit) -%}
@@ -60,8 +59,9 @@ body = """
 {%- endfor %}
 {% endif %}
 
-{%- if github -%}
-{%- set new_contributors = github.contributors | filter(attribute="is_first_time", value=true) -%}
+{%- if github or gitea -%}
+{%- if github %}{% set_global contribs = github.contributors %}{% else %}{% set_global contribs = gitea.contributors %}{% endif -%}
+{%- set new_contributors = contribs | filter(attribute="is_first_time", value=true) -%}
 {% if new_contributors | length > 0 %}
 ### :tada: New Contributors ({{ new_contributors | length }})
 {% endif %}\
@@ -85,10 +85,12 @@ footer = """
 trim = true
 # An array of regex based postprocessors to modify the changelog.
 postprocessors = [
-  # Replace the placeholder `<REPO>` with a URL.
+  # Replace the placeholders with host-specific URLs supplied by the wrapper.
   # https://github.com/orhun/git-cliff/issues/610#issuecomment-3315092166
-  # { pattern = '<REPO>', replace_command = 'sed "s|<REPO>|${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}|g"' },
-  { pattern = '<REPO>', replace_command = 'sed "s|<REPO>|https://github.com/${GIT_CLIFF__REMOTE__GITHUB__OWNER}/${GIT_CLIFF__REMOTE__GITHUB__REPO}|g"' },
+  # `<REPO>`              = full repo URL (e.g. https://github.com/owner/repo or https://gitea.example.com/owner/repo)
+  # `<REPO_PLATFORM_URL>` = host root used to link user profiles (e.g. https://github.com or https://gitea.example.com)
+  { pattern = '<REPO_PLATFORM_URL>', replace_command = 'sed "s|<REPO_PLATFORM_URL>|${FUGIT_REMOTE_PLATFORM_URL}|g"' },
+  { pattern = '<REPO>',               replace_command = 'sed "s|<REPO>|${FUGIT_REMOTE_BASE_URL}|g"' },
 ]
 
 

@@ -18,12 +18,38 @@ VERSION_TAG_PREFIX_MODE="${VERSION_TAG_PREFIX_MODE:-require}"
 check_typos
 check_git_cliff
 check_semver
-check_gh
+
+FUGIT_HOST_TYPE="${FUGIT_HOST_TYPE:-github}"
+
+case "$FUGIT_HOST_TYPE" in
+github)
+    : "${GIT_CLIFF__REMOTE__GITHUB__OWNER:?required (e.g. toggle-corp)}"
+    : "${GIT_CLIFF__REMOTE__GITHUB__REPO:?required (e.g. fugit)}"
+    # Auto-derive URLs from owner/repo so wrappers don't need to repeat them.
+    FUGIT_REMOTE_BASE_URL="${FUGIT_REMOTE_BASE_URL:-https://github.com/${GIT_CLIFF__REMOTE__GITHUB__OWNER}/${GIT_CLIFF__REMOTE__GITHUB__REPO}}"
+    FUGIT_REMOTE_PLATFORM_URL="${FUGIT_REMOTE_PLATFORM_URL:-https://github.com}"
+    export FUGIT_REMOTE_BASE_URL FUGIT_REMOTE_PLATFORM_URL
+    check_gh
+    echo "Generating GITHUB_TOKEN using gh (Used by git-cliff)"
+    GITHUB_TOKEN="$(gh auth token)"
+    export GITHUB_TOKEN
+    ;;
+gitea)
+    : "${FUGIT_REMOTE_BASE_URL:?required for Gitea (e.g. https://gitea.example.com/owner/repo)}"
+    : "${FUGIT_REMOTE_PLATFORM_URL:?required for Gitea (e.g. https://gitea.example.com)}"
+    : "${GIT_CLIFF__REMOTE__GITEA__OWNER:?required (e.g. togglecorp)}"
+    : "${GIT_CLIFF__REMOTE__GITEA__REPO:?required (e.g. togglectl)}"
+    : "${GIT_CLIFF__REMOTE__GITEA__API_URL:?required for self-hosted Gitea (e.g. https://gitea.example.com/api/v1)}"
+    check_gitea_token
+    ;;
+*)
+    log_error "Invalid FUGIT_HOST_TYPE: ${FUGIT_HOST_TYPE} (expected github|gitea)"
+    exit 1
+    ;;
+esac
 
 log_warning "Using VERSION_TAG_PREFIX_MODE=${VERSION_TAG_PREFIX_MODE}"
-echo "Generating GITHUB_TOKEN using gh (Used by git-cliff)"
-GITHUB_TOKEN="$(gh auth token)"
-export GITHUB_TOKEN
+log_warning "Using FUGIT_HOST_TYPE=${FUGIT_HOST_TYPE}"
 
 if [ ! -d .git ]; then
     log_error "Detected '$REPO_NAME' as a git submodule"

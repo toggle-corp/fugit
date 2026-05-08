@@ -60,6 +60,16 @@ function check_gh {
     fi
 }
 
+function check_gitea_token {
+    if [ -z "${GITEA_TOKEN:-}" ]; then
+        local token_url="${FUGIT_REMOTE_PLATFORM_URL:-<gitea-host>}/user/settings/applications"
+        log_error "GITEA_TOKEN env var is required."
+        log_error "Unauthenticated Gitea API responses can return null where git-cliff expects a sequence, causing a panic."
+        log_error "Create a token at ${token_url}, then 'export GITEA_TOKEN=...'"
+        exit 1
+    fi
+}
+
 function check_yq {
     if ! command -v yq &>/dev/null; then
         log_error "yq is required to parse yaml ."
