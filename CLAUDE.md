@@ -173,6 +173,49 @@ Common: `git-cliff`, `semver`, `typos` on `$PATH`. Repo standalone (not a submod
 
 Script writes `CHANGELOG.md`, commits it, and creates a signed tag. After it finishes: `git push origin <tag>` then `git push`.
 
+## Rendering `cliff.toml` from CI
+
+You can run `git-cliff` against `fugit/configs/cliff.toml` from a CI workflow to render a fresh changelog (e.g. to populate a GitHub Release body on tag push, separate from the CHANGELOG.md that `release.sh` committed locally). The config uses two `replace_command` features that require setup on the runner — get any of them wrong and the output looks plausibly correct but is silently broken.
+
+### 1. `typos` must be on `$PATH`
+
+`cliff.toml`'s commit preprocessor runs `typos --write-changes -` against every commit message. If `typos` is missing, the preprocessor exits non-zero and **git-cliff silently drops the affected commits** — the rendered output keeps the version header but the body is empty.
+
+GitHub Actions:
+
+```yaml
+- name: Install typos
+  uses: taiki-e/install-action@v2
+  with:
+    tool: typos
+```
+
+`typos` is the same binary `release.sh` already checks for locally (see Requirements above), so CI is just matching the documented local-dev expectation.
+
+### 2. `FUGIT_REMOTE_BASE_URL` and `FUGIT_REMOTE_PLATFORM_URL` must be exported to git-cliff
+
+`cliff.toml`'s changelog postprocessors substitute `<REPO>` / `<REPO_PLATFORM_URL>` placeholders with the real URLs via shell `sed`. Without the env vars, sed substitutes with empty strings, leaving literal `<REPO>/commit/<sha>` strings throughout the rendered body.
+
+GitHub Actions:
+
+```yaml
+- name: Generate changelog
+  uses: orhun/git-cliff-action@v4
+  with:
+    config: fugit/configs/cliff.toml
+    args: -vv --latest --strip all --github-repo ${{ github.repository }}
+  env:
+    OUTPUT: CHANGELOG.latest.md
+    FUGIT_REMOTE_BASE_URL: https://github.com/${{ github.repository }}
+    FUGIT_REMOTE_PLATFORM_URL: https://github.com
+```
+
+For Gitea paths, set the URLs to your Gitea host.
+
+### 3. Do NOT pass `--no-exec` to git-cliff
+
+`--no-exec` disables ALL `replace_command` directives at once — both the postprocessors above AND the typos preprocessor. With `--no-exec` you get: literal `<REPO>` strings in the output, AND (if you later remove it) empty bodies until typos is installed. The local `release.sh` invokes git-cliff without `--no-exec`; CI workflows should mirror that.
+
 ## Auto-publishing Gitea releases via Woodpecker CI
 
 `release.sh` only creates the local tag; Gitea won't surface a Release entry until one is created via UI or API. To automate, add a Woodpecker pipeline triggered on tag push that calls Gitea's release API.
