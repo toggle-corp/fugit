@@ -119,12 +119,37 @@ export GIT_CLIFF__REMOTE__GITEA__API_URL=https://<gitea-host>/api/v1
 
 4. Commit: `chore: add release.sh using fugit`.
 
+### Hook contract — files mutated inside the hook MUST be `git add`-ed
+
+`scripts/release.sh` stages **only** `CHANGELOG.md` before its release
+commit (literally `git add CHANGELOG.md && git commit -m ...`, no
+`-a`). Anything the hook writes to the working tree is invisible to
+that commit and to the tag created immediately after, so the released
+tag will point at the **old** version of every file the hook touched.
+
+Stage the files inside the hook itself:
+
+```bash
+function release_custom_hook {
+    # Bump the chart version baked into the tag.
+    sed -i.bak "s/^version: .*/version: $version_tag/" deploy/helm/chart/Chart.yaml
+    rm -f deploy/helm/chart/Chart.yaml.bak
+
+    # REQUIRED: stage the mutation. Without this, the next `git commit`
+    # in fugit's release.sh will not pick it up.
+    git add deploy/helm/chart/Chart.yaml
+}
+```
+
+The hook receives no arguments; the version is in the surrounding
+shell's `$version_tag` variable (set by fugit before the hook runs).
+
 ### Variables — what each does
 
 - `START_COMMIT` — git-cliff range start. Bump only when archiving old changelogs (also update `cliff.toml:footer`).
 - `REPO_NAME` — display only, used in error messages.
 - `DEFAULT_BRANCH` — release.sh warns if you run from another branch.
-- `RELEASE_CUSTOM_HOOK` — function name run before changelog generation. Use it to bump versions in `pyproject.toml`, `package.json`, etc., and `git add` those files so they go into the release commit.
+- `RELEASE_CUSTOM_HOOK` — function name run before changelog generation. Use it to bump versions in `pyproject.toml`, `package.json`, `Chart.yaml`, etc. See **Hook contract** above: files mutated by the hook must be `git add`-ed inside it, or they won't make it into the release commit.
 - `FUGIT_HOST_TYPE` — `github` (default) or `gitea`. Selects the auth path. Only needed for Gitea.
 - `FUGIT_REMOTE_BASE_URL` — full repo URL for changelog commit/PR/compare links. **Required for Gitea**; auto-derived from `GIT_CLIFF__REMOTE__GITHUB__{OWNER,REPO}` for GitHub.
 - `FUGIT_REMOTE_PLATFORM_URL` — host root for contributor profile links. **Required for Gitea**; defaults to `https://github.com` for GitHub.
