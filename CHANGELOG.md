@@ -1,5 +1,27 @@
 # Changelog
 
+## [v0.2.0](https://github.com/toggle-corp/fugit/compare/v0.1.6..v0.2.0) - 2026-06-12
+### Changes:
+
+#### 🚀  Features
+
+- Support for gitea + agent ([#3](https://github.com/toggle-corp/fugit/issues/3)) - ([7200a3a](https://github.com/toggle-corp/fugit/commit/7200a3a921fe13641ddd2e61ff557857f39b03d0))
+- Support for gitea - ([0e7cf43](https://github.com/toggle-corp/fugit/commit/0e7cf439725c295b908a5c14f6b1e96bfcd6018d))
+
+#### 🐛 Bug Fixes
+
+- Release.sh optional argument - ([9fc6c2c](https://github.com/toggle-corp/fugit/commit/9fc6c2c67fe7e8ee4779520d78bf80276b471aa2))
+
+#### 📚 Documentation
+
+- *(claude)* Document the CI gotchas around rendering cliff.toml - ([ad0f7cd](https://github.com/toggle-corp/fugit/commit/ad0f7cdc3f98a1c0a59c7d88cfc62239a805ce8e))
+- *(claude)* Make the 'git add files you mutate' hook contract loud - ([5f1649c](https://github.com/toggle-corp/fugit/commit/5f1649c292595ccff549e922c1f6bf2a7a877bde))
+- Add AGENTS.md and README.md - ([96a4ca7](https://github.com/toggle-corp/fugit/commit/96a4ca721818c61897c059b9ab6be02f976d21c9))
+
+### 🍻 Pull Requests (1)
+- (#3) [Feat: support for gitea + agent](https://github.com/toggle-corp/fugit/pull/3)
+
+
 ## [v0.1.6](https://github.com/toggle-corp/fugit/compare/v0.1.5..v0.1.6) - 2026-04-10
 ### Changes:
 
