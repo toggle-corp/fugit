@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.0](https://github.com/toggle-corp/fugit/compare/v0.2.0..v0.3.0) - 2026-08-16
+### Changes:
+
+#### 🚀  Features
+
+- *(helm)* [**breaking**] Treat tests.yaml keys as snapshot names only - ([17d0f85](https://github.com/toggle-corp/fugit/commit/17d0f854f43374ce97250d1c15bdd2a37d31d21d))
+
+
 ## [v0.2.0](https://github.com/toggle-corp/fugit/compare/v0.1.6..v0.2.0) - 2026-06-12
 ### Changes:
 
