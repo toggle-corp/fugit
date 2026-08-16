@@ -241,21 +241,28 @@ Writes `CHANGELOG.md`, commits it, creates a signed tag. After it finishes: `git
    "$SCRIPT_DIR/../fugit/scripts/helm-update-snapshots.sh" "$@"
    ```
 2. `chmod +x helm/update-snapshots.sh`.
-3. Create `helm/tests.yaml` declaring tests and their base values files:
+3. Create `helm/tests.yaml`. Each key names a snapshot; its list is the complete, ordered set of values files layered on the chart's `values.yaml`. A trailing `.yaml` on the key is optional:
    ```yaml
    tests:
-     alpha.yaml:
+     alpha.yaml:                     # -> snapshots/alpha.yaml
+       - values/operators/dragonfly.yaml
        - values/alpha.yaml
-     prod.yaml:
-       - values/operators.yaml
+       - values/traefik.yaml
+     staging:                        # -> snapshots/staging.yaml
+       - values/operators/dragonfly.yaml
+       - values/staging.yaml
+       - tests/go-deploy-dummy.yaml
    ```
-4. For each key in `tests:`, create a matching overlay file at `helm/tests/<key>` (e.g. `helm/tests/alpha.yaml`). The script auto-appends this on top of the values listed in `tests.yaml` — it is **not** declared in `tests.yaml`.
+   Keys that resolve to the same snapshot name (`prod` and `prod.yaml`) are rejected before anything renders.
+4. Put values a snapshot needs but a real deployment supplies (dummy image tags, hosts, secrets) under `helm/tests/`, and **list them in `tests.yaml`** like any other file — nothing under `helm/tests/` is included implicitly, and one dummy file can be shared by several tests. Position in the list decides precedence.
 5. Generate the first snapshots:
    ```bash
    ./helm/update-snapshots.sh
    ```
    Output goes to `helm/snapshots/<key-without-yaml>.yaml`.
 6. Commit `tests.yaml`, `tests/`, and `snapshots/`.
+
+> **Upgrading from ≤ v0.2.0:** the script used to append `helm/tests/<key>` to every test automatically. It no longer does. Where such a file exists but is unlisted the script now errors out naming it — add it to that test's list (usually last, matching the old precedence) or delete it.
 
 ### Usage
 
@@ -289,7 +296,7 @@ Fail PRs that drift from committed snapshots:
 
 > **Pitfall:** Forgetting `export SCRIPT_DIR` in the wrapper. Plain assignment (`SCRIPT_DIR=...`) is not enough; the inner script reads it from the environment and aborts on unset.
 
-> **Pitfall:** The `helm/tests/<key>` overlay is silently auto-included. If you only inspect `tests.yaml` you'll be confused about where a rendered value came from — also check `helm/tests/<key>` with the same filename as the key.
+> **Pitfall:** Values precedence follows list order, last wins. A file appended after an environment overlay (e.g. `values/traefik.yaml`) overrides it — reorder the list rather than editing the overlay.
 
 ---
 
@@ -390,6 +397,7 @@ Trigger: `git push origin <tag>` after `release.sh` finishes. Woodpecker picks u
 | Rendered changelog contains literal `<REPO>/commit/<sha>` strings | `FUGIT_REMOTE_BASE_URL` / `FUGIT_REMOTE_PLATFORM_URL` not exported to git-cliff | Export both env vars to the git-cliff step |
 | Released tag points at old version of `Chart.yaml` / `pyproject.toml` / etc. that the hook should have bumped | `release_custom_hook` mutated files but didn't `git add` them | Add `git add <file>` inside the hook |
 | `helm-update-snapshots.sh` aborts with `SCRIPT_DIR: error` | Wrapper assigned `SCRIPT_DIR` but did not `export` it | Add `export SCRIPT_DIR` in the wrapper |
-| Helm snapshot has values not present in any file listed in `tests.yaml` | Auto-included `helm/tests/<key>` overlay | Inspect `helm/tests/<key>` (same filename as the `tests.yaml` key) |
+| `helm-update-snapshots.sh` errors: `tests/<key> exists but is not listed` | Auto-inclusion of `helm/tests/<key>` was removed after v0.2.0 | List the file in that test's `tests.yaml` entry (last, to keep the old precedence) or delete it |
+| Two `tests.yaml` keys rejected as writing the same snapshot | Keys differ only by the optional `.yaml` suffix (`prod` vs `prod.yaml`) | Rename one key |
 | Submodule pointer drifts from `.gitmodules` `branch =` tag | Someone ran `git checkout` inside `fugit/` instead of `sub-module-sync.sh` | Re-run `bash fugit/scripts/sub-module-sync.sh` |
 | `helm package` / `helm install` rejects `v1.2.3` as invalid SemVer in `Chart.yaml` | `VERSION_TAG_PREFIX_MODE=require` produces `v`-prefixed tags; helm `version:` requires plain SemVer | Switch to `VERSION_TAG_PREFIX_MODE=forbid`, or strip `v` inside the hook (`chart_version="${version_tag#v}"`) before writing `Chart.yaml` |
