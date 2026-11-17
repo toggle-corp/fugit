@@ -68,7 +68,8 @@ if [ "$current_branch" != "$DEFAULT_BRANCH" ]; then
 fi
 
 echo "Existing tags:"
-git for-each-ref --sort=-creatordate --format '- %(refname:short)' refs/tags | head -n 10
+# NOTE: Use --count instead of `| head` to avoid SIGPIPE (exit 141) under pipefail on repos with many tags
+git for-each-ref --count=10 --sort=-creatordate --format '- %(refname:short)' refs/tags
 echo
 
 default_version="$1"
