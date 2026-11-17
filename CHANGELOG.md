@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.3.1](https://github.com/toggle-corp/fugit/compare/v0.3.0..v0.3.1) - 2026-11-17
+### Changes:
+
+#### 🐛 Bug Fixes
+
+- *(release)* Avoid SIGPIPE when listing tags under pipefail ([#4](https://github.com/toggle-corp/fugit/issues/4)) - ([1ffc7f1](https://github.com/toggle-corp/fugit/commit/1ffc7f15f9a61e30715c68bfd90144221d2f70f9))
+
+### 🍻 Pull Requests (1)
+- (#4) [Fix(release): avoid SIGPIPE when listing tags under pipefail](https://github.com/toggle-corp/fugit/pull/4)
+
+### :tada: New Contributors (1)
+
+- [@susilnem](https://github.com/susilnem) made their first contribution in [#4](https://github.com/toggle-corp/fugit/pull/4)
+
 ## [v0.3.0](https://github.com/toggle-corp/fugit/compare/v0.2.0..v0.3.0) - 2026-08-16
 ### Changes:
 
